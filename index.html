@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Chamados - TI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>Cercred HelpDesk</h1>
+        </div>
+        <div class="header-right">
+            <span id="loggedInUser"></span>
+            <button id="logoutButton">Sair</button>
+        </div>
+    </header>
+    <div class="login-container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <label for="username">Nome:</label>
+            <input type="text" id="username" required>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+
+    <div class="ticket-container" style="display: none;">
+        <form class="ticketForm" id="ticketForm">
+            <label for="service">Serviço:</label>
+            <select id="service">
+                <option value="Headset Trocar">Headset Trocar</option>
+                <option value="Máquina sem rede">Máquina sem rede</option>
+                <option value="E-mail supervisão">E-mail supervisão</option>
+            </select>
+            
+            <label for="description">Descrição do Problema:</label>
+            <textarea id="description" required></textarea>
+
+            <label for="deskNumber">Número da Mesa:</label>
+            <input type="text" id="deskNumber" required>
+
+            <label for="employeeId">Matrícula do Atendente:</label>
+            <input type="text" id="employeeId">
+            
+            <input type="hidden" id="usernameField">
+            <input type="hidden" id="dateTimeField">
+
+            <button type="submit">Abrir Chamado</button>
+        </form>
+    </div>
+
+    <div class="ticket-list-container" style="display: none;">
+        <h2>Chamados Abertos</h2>
+        <ul id="ticketList"></ul>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
