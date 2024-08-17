@@ -46,6 +46,10 @@ button:hover {
     background-color: #218838;
 }
 
+.login-container {
+    margin-top: 4%;
+}
+
 .ticket-container {
     margin-top: 4%;
 }
