@@ -1,12 +1,44 @@
-// Função para salvar os chamados no localStorage
-function saveTickets(tickets) {
-    localStorage.setItem('tickets', JSON.stringify(tickets));
+// Função para carregar os chamados do servidor
+async function loadTickets() {
+    try {
+        const response = await fetch('http://localhost:3000/tickets');
+        const tickets = await response.json();
+        return tickets;
+    } catch (error) {
+        console.error('Erro ao carregar os chamados:', error);
+        return [];
+    }
 }
 
-// Função para carregar os chamados do localStorage
-function loadTickets() {
-    const tickets = localStorage.getItem('tickets');
-    return tickets ? JSON.parse(tickets) : [];
+// Função para criar um novo chamado no servidor
+async function createTicket(ticketData) {
+    try {
+        const response = await fetch('http://localhost:3000/tickets', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(ticketData)
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Erro ao criar o chamado:', error);
+    }
+}
+
+// Função para atualizar um chamado no servidor
+async function updateTicketStatus(id, updatedData) {
+    try {
+        await fetch(`http://localhost:3000/tickets/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedData)
+        });
+    } catch (error) {
+        console.error('Erro ao atualizar o chamado:', error);
+    }
 }
 
 // Função para renderizar os chamados na lista como uma tabela
@@ -14,7 +46,6 @@ function renderTickets(tickets) {
     const ticketList = document.getElementById('ticketList');
     ticketList.innerHTML = '';
 
-    // Criar a tabela e o cabeçalho
     const table = document.createElement('table');
     table.className = 'ticket-table';
 
@@ -31,7 +62,6 @@ function renderTickets(tickets) {
     `;
     table.appendChild(headerRow);
 
-    // Preencher a tabela com os chamados
     tickets.forEach((ticket, index) => {
         const row = document.createElement('tr');
 
@@ -41,10 +71,10 @@ function renderTickets(tickets) {
             <td>${ticket.service}</td>
             <td>${ticket.description}</td>
             <td>${ticket.deskNumber}</td>
-            <td>${ticket.employeeId}</td>
+            <td>${ticket.employeeId || 'N/A'}</td>
             <td>
                 <select class="status">
-                    <option value="Concluido" ${ticket.status === 'Concluindo' ? 'selected' : ''}>Concluido</option>
+                    <option value="Concluido" ${ticket.status === 'Concluido' ? 'selected' : ''}>Concluido</option>
                     <option value="A caminho" ${ticket.status === 'A caminho' ? 'selected' : ''}>A caminho</option>
                     <option value="Reset Solicitado" ${ticket.status === 'Reset Solicitado' ? 'selected' : ''}>Reset Solicitado</option>
                     <option value="REQ aberta" ${ticket.status === 'REQ aberta' ? 'selected' : ''}>REQ aberta</option>
@@ -67,18 +97,17 @@ function renderTickets(tickets) {
 
         table.appendChild(row);
 
-        // Atualiza o status no localStorage automaticamente ao alterar o status
+        // Atualiza o status e técnico no servidor automaticamente
         row.querySelector('.status').addEventListener('change', function () {
             const updatedStatus = row.querySelector('.status').value;
             tickets[index].status = updatedStatus;
-            saveTickets(tickets);
+            updateTicketStatus(ticket.id, { status: updatedStatus });
         });
 
-        // Atualiza o técnico no localStorage automaticamente ao alterar o nome do técnico
         row.querySelector('.techName').addEventListener('change', function () {
             const updatedTechName = row.querySelector('.techName').value;
             tickets[index].techName = updatedTechName;
-            saveTickets(tickets);
+            updateTicketStatus(ticket.id, { techName: updatedTechName });
         });
     });
 
@@ -95,12 +124,19 @@ function loadUsername() {
     return localStorage.getItem('loggedInUser');
 }
 
+// Formatação de data para o formato MySQL
+function formatDateTime(dateTime) {
+    const date = new Date(dateTime);
+    const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
+    return formattedDate;
+}
+
 // Verifica se o usuário já está logado ao carregar a página
-window.addEventListener('load', function () {
+window.addEventListener('load', async function () {
     const username = loadUsername();
     if (username) {
         document.getElementById('usernameField').value = username;
-        const dateTime = new Date().toLocaleString();
+        const dateTime = formatDateTime(new Date());
         document.getElementById('dateTimeField').value = dateTime;
 
         // Esconde o login e mostra os formulários
@@ -109,12 +145,12 @@ window.addEventListener('load', function () {
         document.querySelector('.ticket-list-container').style.display = 'block';
 
         // Carrega e renderiza os chamados
-        const tickets = loadTickets();
+        const tickets = await loadTickets();
         renderTickets(tickets);
     }
 });
 
-document.getElementById('loginForm').addEventListener('submit', function (event) {
+document.getElementById('loginForm').addEventListener('submit', async function (event) {
     event.preventDefault();
     const username = document.getElementById('username').value;
 
@@ -123,7 +159,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
 
     // Armazena o nome de usuário e a data/hora
     document.getElementById('usernameField').value = username;
-    const dateTime = new Date().toLocaleString();
+    const dateTime = formatDateTime(new Date());
     document.getElementById('dateTimeField').value = dateTime;
 
     // Esconde o login e mostra os formulários
@@ -132,7 +168,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     document.querySelector('.ticket-list-container').style.display = 'block';
 
     // Carrega e renderiza os chamados
-    const tickets = loadTickets();
+    const tickets = await loadTickets();
     renderTickets(tickets);
 });
 
@@ -158,7 +194,7 @@ window.addEventListener('load', function () {
 // Adiciona evento de logout ao botão
 document.getElementById('logoutButton').addEventListener('click', logout);
 
-document.getElementById('ticketForm').addEventListener('submit', function (event) {
+document.getElementById('ticketForm').addEventListener('submit', async function (event) {
     event.preventDefault();
 
     const service = document.getElementById('service').value;
@@ -168,28 +204,27 @@ document.getElementById('ticketForm').addEventListener('submit', function (event
     const username = document.getElementById('usernameField').value;
     const dateTime = document.getElementById('dateTimeField').value;
 
-    const tickets = loadTickets();
+    // Verifica se todos os campos obrigatórios estão preenchidos
+    if (!service || !description || !deskNumber || !username || !dateTime) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+    }
 
-    // Cria novo ticket
     const newTicket = {
         username,
-        dateTime,
+        dateTime: formatDateTime(dateTime),
         service,
         description,
         deskNumber,
         employeeId,
-        status: 'A caminho', // Default status
-        techName: 'Gabriel. N' // Default technician name
+        status: 'A caminho',
+        techName: 'Gabriel N.'
     };
 
-    tickets.push(newTicket);
-    saveTickets(tickets);
+    await createTicket(newTicket);
+    const tickets = await loadTickets();
     renderTickets(tickets);
 
     // Limpar formulário
     document.getElementById('ticketForm').reset();
 });
-
-
-
-
