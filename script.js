@@ -198,14 +198,14 @@ document.getElementById('ticketForm').addEventListener('submit', async function 
     event.preventDefault();
 
     const service = document.getElementById('service').value;
-    const description = document.getElementById('description').value;
+    const description = document.getElementById('description').value;  // Pode ser vazio
     const deskNumber = document.getElementById('deskNumber').value;
     const employeeId = document.getElementById('employeeId').value;
     const username = document.getElementById('usernameField').value;
     const dateTime = document.getElementById('dateTimeField').value;
 
-    // Verifica se todos os campos obrigatórios estão preenchidos
-    if (!service || !description || !deskNumber || !username || !dateTime) {
+    // Verifica se os campos obrigatórios estão preenchidos (excluindo descrição)
+    if (!service || !deskNumber || !username || !dateTime) {
         alert('Por favor, preencha todos os campos obrigatórios.');
         return;
     }
@@ -214,7 +214,7 @@ document.getElementById('ticketForm').addEventListener('submit', async function 
         username,
         dateTime: formatDateTime(dateTime),
         service,
-        description,
+        description,  
         deskNumber,
         employeeId,
         status: 'A caminho',

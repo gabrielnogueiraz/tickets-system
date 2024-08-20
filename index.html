@@ -35,7 +35,7 @@
             </select>
             
             <label for="description">Descrição do Problema:</label>
-            <textarea id="description" required></textarea>
+            <textarea id="description"></textarea>
 
             <label for="deskNumber">Número da Mesa:</label>
             <input type="text" id="deskNumber" required>
@@ -55,6 +55,36 @@
         <ul id="ticketList"></ul>
     </div>
 
-    <script src="script.js"></script>
-</body>
+        <script src="script.js"></script>
+        <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+        <script>
+            const socket = io();
+
+            // Ouvir quando um novo chamado é criado
+            socket.on('ticketCreated', async function(ticket) {
+            // Adicionar o novo chamado na lista
+            const tickets = await loadTickets();
+            renderTickets(tickets);
+        });
+
+            // Ouvir quando um chamado é atualizado
+            socket.on('ticketUpdated', async function(updatedTicket) {
+            // Atualizar o chamado na lista
+            const tickets = await loadTickets();
+            renderTickets(tickets);
+        });
+
+            // Função para carregar os chamados do servidor
+            async function loadTickets() {
+                try {
+                    const response = await fetch('http://localhost:3000/tickets');
+                    const tickets = await response.json();
+                    return tickets;
+                } catch (error) {
+                    console.error('Erro ao carregar os chamados:', error);
+                    return [];
+            }
+        }
+        </script>
+    </body>
 </html>
